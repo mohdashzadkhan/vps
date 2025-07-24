@@ -18,5 +18,5 @@ This repository contains a one-shot installation script for setting up a fresh V
 ```bash
 git clone https://github.com/mohdashzadkhan/vps.git
 cd vps
-chmod +x install-tools.sh
-./install-tools.sh
+chmod +x setup.sh
+./setup.sh
