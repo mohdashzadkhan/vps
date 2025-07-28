@@ -33,4 +33,5 @@ mkdir -p ~/.config/puredns
 wget -q https://raw.githubusercontent.com/trickest/resolvers/main/resolvers.txt -O ~/.config/puredns/resolvers.txt
 wget -q https://raw.githubusercontent.com/trickest/resolvers/main/resolvers-trusted.txt -O ~/.config/puredns/resolvers-trusted.txt
 
-echo "[*] Done. Reload your terminal or run: source ~/.bashrc"
+echo "[*] Done. Running source ~/.bashrc or Reload your terminal or run: source ~/.bashrc"
+source ~/.bashrc
