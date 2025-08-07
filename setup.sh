@@ -35,8 +35,11 @@ wget -q https://raw.githubusercontent.com/trickest/resolvers/main/resolvers-trus
 
 echo "[*] Setting up Subfinder provider-config.yaml..."
 mkdir -p ~/.config/subfinder
-cp "provider-config.yaml" ~/.config/subfinder/
-echo "[*] provider-config.yaml copied to ~/.config/subfinder"
+# This is the corrected line. Since you 'cd vps' before running the script,
+# 'provider-config.yaml' is in the current directory.
+cp provider-config.yaml ~/.config/subfinder/
+echo "[*] provider-config.yaml copied successfully."
+# ====================================================================
 
 echo "[*] Done. Running source ~/.bashrc or Reload your terminal or run: source ~/.bashrc"
 source ~/.bashrc
