@@ -2,16 +2,16 @@
 # A robust script to set up a VPS with essential recon tools.
 # This script is designed to be run from anywhere, as it automatically
 # detects its own location to find necessary configuration files.
+# It also auto-detects system architecture for Nuclei installation.
 
 # Exit immediately if a command exits with a non-zero status.
 set -e
 
 # --- Automatically find the script's own directory ---
-# This allows the script to be run from any location on the system.
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 echo "================================================================="
-echo "            VPS Recon Tools Auto-Installer"
+echo "            VPS Recon Tools Auto-Installer by skshadan"
 echo "================================================================="
 echo "[*] Script is running from: $SCRIPT_DIR"
 echo
@@ -47,7 +47,7 @@ echo "[+] Installing recon tools..."
 echo "  [-] Installing massdns..."
 cd ~
 if [ -d "massdns" ]; then
-    echo "[!] massdns directory already exists. Skipping clone."
+    echo "  [!] massdns directory already exists. Skipping clone."
 else
     git clone https://github.com/blechschmidt/massdns.git
 fi
@@ -62,6 +62,39 @@ echo "  [✔] puredns installed."
 echo "  [-] Installing subfinder..."
 go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest
 echo "  [✔] subfinder installed."
+
+# --- NEW: httpx Installation ---
+echo "  [-] Installing httpx..."
+go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest
+echo "  [✔] httpx installed."
+
+# --- NEW: Nuclei Installation (with auto-detection) ---
+echo "  [-] Installing Nuclei..."
+NUCLEI_VERSION="3.4.7" # You can update this version as needed
+# Detect OS and Architecture
+OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+ARCH=$(uname -m)
+case $ARCH in
+    x86_64)
+        ARCH="amd64"
+        ;;
+    aarch64)
+        ARCH="arm64"
+        ;;
+    *)
+        echo "  [!] Unsupported architecture: $ARCH. Please install Nuclei manually."
+        exit 1
+        ;;
+esac
+# Download and install
+NUCLEI_URL="https://github.com/projectdiscovery/nuclei/releases/download/v${NUCLEI_VERSION}/nuclei_${NUCLEI_VERSION}_${OS}_${ARCH}.zip"
+echo "  [*] Downloading Nuclei from: $NUCLEI_URL"
+cd /tmp
+wget -q "$NUCLEI_URL"
+unzip -o "nuclei_${NUCLEI_VERSION}_${OS}_${ARCH}.zip" # -o overwrites without asking
+sudo mv nuclei /usr/local/bin/
+rm "nuclei_${NUCLEI_VERSION}_${OS}_${ARCH}.zip"
+echo "  [✔] Nuclei installed."
 echo
 
 # --- Configuration File Setup ---
@@ -69,13 +102,11 @@ echo "[+] Setting up configuration files..."
 
 echo "  [-] Configuring puredns resolvers..."
 mkdir -p ~/.config/puredns
-# Copy the resolver file from the script's directory
 cp "$SCRIPT_DIR/resolvers.txt" ~/.config/puredns/resolvers.txt
 echo "  [✔] puredns resolvers configured."
 
 echo "  [-] Configuring Subfinder providers..."
 mkdir -p ~/.config/subfinder
-# Copy the provider config file from the script's directory
 cp "$SCRIPT_DIR/provider-config.yaml" ~/.config/subfinder/
 echo "  [✔] Subfinder providers configured."
 echo
