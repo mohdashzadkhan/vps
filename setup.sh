@@ -1,47 +1,89 @@
 #!/bin/bash
+# A robust script to set up a VPS with essential recon tools.
+# This script is designed to be run from anywhere, as it automatically
+# detects its own location to find necessary configuration files.
+
+# Exit immediately if a command exits with a non-zero status.
 set -e
 
-echo "[*] Updating system..."
-sudo apt update && sudo apt upgrade -y
+# --- Automatically find the script's own directory ---
+# This allows the script to be run from any location on the system.
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-echo "[*] Installing dependencies..."
-sudo apt install -y git curl wget unzip make build-essential python3-pip
+echo "================================================================="
+echo "            VPS Recon Tools Auto-Installer"
+echo "================================================================="
+echo "[*] Script is running from: $SCRIPT_DIR"
+echo
 
-echo "[*] Installing Go..."
-GO_VERSION="1.22.3"
-cd /tmp
-wget -q https://go.dev/dl/go$GO_VERSION.linux-amd64.tar.gz
-sudo rm -rf /usr/local/go
-sudo tar -C /usr/local -xzf go$GO_VERSION.linux-amd64.tar.gz
+# --- System Update and Dependencies ---
+echo "[+] Updating system packages and installing dependencies..."
+sudo apt-get update && sudo apt-get upgrade -y
+sudo apt-get install -y git curl wget unzip make build-essential python3-pip
+echo "[✔] Dependencies installed."
+echo
+
+# --- Go Language Installation ---
+GO_VERSION="1.22.3" # You can update this version number as needed
+echo "[+] Installing Go (Version $GO_VERSION)..."
+if [ -d "/usr/local/go" ]; then
+    echo "[!] Go is already installed. Skipping."
+else
+    cd /tmp
+    wget -q https://go.dev/dl/go$GO_VERSION.linux-amd64.tar.gz
+    sudo rm -rf /usr/local/go
+    sudo tar -C /usr/local -xzf go$GO_VERSION.linux-amd64.tar.gz
+    rm go$GO_VERSION.linux-amd64.tar.gz
+    echo "[✔] Go installed successfully."
+fi
+# Set Go environment variables for the current session and for future sessions
 echo 'export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin' >> ~/.bashrc
 export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin
+echo
 
-echo "[*] Installing massdns..."
+# --- Tool Installation ---
+echo "[+] Installing recon tools..."
+
+echo "  [-] Installing massdns..."
 cd ~
-git clone https://github.com/blechschmidt/massdns.git
-cd massdns && make
-sudo cp bin/massdns /usr/local/bin/
+if [ -d "massdns" ]; then
+    echo "[!] massdns directory already exists. Skipping clone."
+else
+    git clone https://github.com/blechschmidt/massdns.git
+fi
+cd massdns && make && sudo make install
+cd ~ # Go back to home directory
+echo "  [✔] massdns installed."
 
-echo "[*] Installing puredns..."
+echo "  [-] Installing puredns..."
 go install github.com/d3mondev/puredns/v2@latest
+echo "  [✔] puredns installed."
 
-echo "[*] Installing subfinder..."
+echo "  [-] Installing subfinder..."
 go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest
+echo "  [✔] subfinder installed."
+echo
 
-echo "[*] Downloading resolver files..."
+# --- Configuration File Setup ---
+echo "[+] Setting up configuration files..."
+
+echo "  [-] Configuring puredns resolvers..."
 mkdir -p ~/.config/puredns
-wget -q https://raw.githubusercontent.com/trickest/resolvers/main/resolvers.txt -O ~/.config/puredns/resolvers.txt
-wget -q https://raw.githubusercontent.com/trickest/resolvers/main/resolvers-trusted.txt -O ~/.config/puredns/resolvers-trusted.txt
+# Copy the resolver file from the script's directory
+cp "$SCRIPT_DIR/resolvers.txt" ~/.config/puredns/resolvers.txt
+echo "  [✔] puredns resolvers configured."
 
-echo "[*] Setting up Subfinder provider-config.yaml..."
+echo "  [-] Configuring Subfinder providers..."
 mkdir -p ~/.config/subfinder
-# This is the corrected line. Since you 'cd vps' before running the script,
-# 'provider-config.yaml' is in the current directory.
-cp provider-config.yaml ~/.config/subfinder/
-echo "[*] provider-config.yaml copied successfully."
-# ====================================================================
+# Copy the provider config file from the script's directory
+cp "$SCRIPT_DIR/provider-config.yaml" ~/.config/subfinder/
+echo "  [✔] Subfinder providers configured."
+echo
 
-echo "[*] Done. Running source ~/.bashrc or Reload your terminal or run: source ~/.bashrc"
-source ~/.bashrc
-
-
+# --- Finalization ---
+echo "================================================================="
+echo "[*] SETUP COMPLETE! [*]"
+echo "================================================================="
+echo "[!] IMPORTANT: For all changes to take effect, you must reload your shell."
+echo "[!] Run this command now: source ~/.bashrc"
+echo
