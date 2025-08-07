@@ -35,7 +35,7 @@ wget -q https://raw.githubusercontent.com/trickest/resolvers/main/resolvers-trus
 
 echo "[*] Setting up Subfinder provider-config.yaml..."
 mkdir -p ~/.config/subfinder
-cp "$(dirname "$0")/provider-config.yaml" ~/.config/subfinder/
+cp "provider-config.yaml" ~/.config/subfinder/
 echo "[*] provider-config.yaml copied to ~/.config/subfinder"
 
 echo "[*] Done. Running source ~/.bashrc or Reload your terminal or run: source ~/.bashrc"
